@@ -12,7 +12,7 @@ def cube (n : ℕ) : Type (u + 1) :=
 def num_unk {n : ℕ} (f : cube n) (i : fin n) : ℕ :=
   match i.val with
   | zero    := zero
-  | succ i' := match (f ⟨i', _⟩) with
+  | succ i' := match f ⟨i', _⟩ with
                | const _ := num_unk f i'
                | unk     := succ (num_unk f i')
                end
