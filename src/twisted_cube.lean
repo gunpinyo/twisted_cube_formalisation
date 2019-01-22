@@ -4,7 +4,7 @@ universe u
 
 inductive intv : Type u
 | const : bool → intv
-| unk : intv
+| unk   : intv
 
 def cube (n : ℕ) : Type (u + 1) :=
   fin n → intv
