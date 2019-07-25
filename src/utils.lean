@@ -7,18 +7,25 @@ def zero {n : ℕ} : fin (nat.succ n) := ⟨nat.zero, nat.zero_lt_succ n⟩
 
 end fin
 
-namespace vector
-variable {n : ℕ}
-variable {α : Type _}
+def hetero_to_homo_eq {α β : Type} {x : α} {y : β} :
+          Π p : x == y, (eq.rec_on (type_eq_of_heq (p : x == y)) x : β) = y :=
+  assume h,
+  by cases h; refl
 
--- def my_cons (a : α) (v : vector α n) : vector α (nat.succ n) :=
---   v.insert_nth a fin.zero
 
--- def eq_from_list : Π {a b : vector α n}, a.val = b.val → a = b
--- | ⟨l, p⟩ ⟨.(l), .(p)⟩ rfl := rfl
-
--- def my_insert_nth (a : α) : fin (nat.succ n) → vector α n
---                                              → vector α (nat.succ n)
--- | fin.succ ()
-
-end vector
+def vector.insert_nth_succ {α : Type*} {n : ℕ} (a : α) (v : vector α n)
+                    (b : α) (i : fin (n +1))
+      : vector.insert_nth b (fin.succ i) (a :: v)
+          = a :: vector.insert_nth b i v :=
+  begin
+    cases v with l p,
+    cases i with i_val i_lt,
+    unfold vector.cons,
+    unfold fin.succ,
+    apply vector.eq,
+    dunfold vector.insert_nth,
+    simp,
+    dunfold list.insert_nth,
+    dunfold list.modify_nth_tail,
+    refl
+  end
