@@ -1,3 +1,39 @@
+import utils
+namespace foo
+def bxor_bxor_id (x y : bool) : bxor x (bxor x y) = y :=
+  begin cases x, simp, simp, end
+
+example (f : ℕ → ℕ) (y : ℕ) (P : ℕ → Type) : ((λ x : ℕ, f x) y) = ((λ x : ℕ, f x) y) :=
+  begin dsimp, end
+
+example (P : bool → Type) (a : bool) :
+    (Π b, P (bxor b (bxor b a))) → P a  :=
+  begin
+    intro h,
+    rw bxor_bxor_id at h,
+    -- intro x,
+    -- rw nat.add_comm, exact h x,
+  end
+end
+
+example (x : ℕ) (h : x = 3)  : x + x + x = 9 :=
+begin
+  set y := x with ←h_xy,
+/-
+x : ℕ,
+y : ℕ := x,
+h_xy : x = y,
+h : y = 3
+⊢ y + y + y = 9
+-/
+end
+
+def foo (n : ℕ) (i : fin n) (v : bitvec n) : bool × fin n :=
+  ((match n, i, v with
+   | 0,      i, _ := _
+   | (_ +1), i, v := v.head end), _)
+
+
 def product_of_units : ℕ → Type
 | 0      := empty
 | (n +1) := unit ⊕ (product_of_units n)
