@@ -11,10 +11,10 @@ section
   | (sum.inl (b', e)) := (b', G.srctrg (bxor (band b' tw) b) e)
   | (sum.inr v)       := (b, v)
 
-  def prism_graph.edge_ext :
-        ∀ (tw : bool) (G : graph) (e e' : prism_graph.edges G),
-          (∀ b, prism_graph.srctrg tw G b e = prism_graph.srctrg tw G b e') →
-        e = e'
+  lemma prism_graph.edge_ext :
+          ∀ (tw : bool) (G : graph) (e e' : prism_graph.edges G),
+            (∀ b, prism_graph.srctrg tw G b e = prism_graph.srctrg tw G b e') →
+          e = e'
   | tw G (sum.inl (ff, e)) (sum.inl (ff, e')) p :=
        begin congr, apply G.edge_ext e e',
              cases tw, all_goals { simp [prism_graph.srctrg] at p, assumption,},
@@ -74,15 +74,15 @@ section
                              in vector.insert_nth (bxor (band tw tw_bit) b) i v
                         end
 
-  private def cube_graph_alt.edge_ext_helper : ∀ (n : ℕ) (i : fin (n +1))
-        (v : bitvec n) (v' : bitvec (n +1)),
-        (∀ b, v.insert_nth b i = v') → false
+  private lemma cube_graph_alt.edge_ext_helper :
+    ∀ (n : ℕ) (i : fin (n +1)) (v : bitvec n) (v' : bitvec (n +1)),
+      (∀ b, v.insert_nth b i = v') → false
   | 0       i          v v' p :=
       begin
         let p' := p (bnot v'.head),
         cases i, cases i_val, swap,
         {exact nat.not_succ_le_zero i_val (nat.le_of_lt_succ i_is_lt),},
-        simp [fin.to_zero, vector.insert_nth_zero] at p',
+        rw [fin.to_zero, vector.insert_nth_zero] at p',
         let p'' := (vector.cons_injection p').1, simp at p'',
         exact bnot_self p'',
       end
@@ -102,11 +102,11 @@ section
         exact cube_graph_alt.edge_ext_helper n fin_i v.tail v'.tail this,
       end
 
-  def cube_graph_alt.edge_ext :
-        ∀ (tw : bool) (n : ℕ) (e e' : cube_graph_alt.edges n),
-          (∀ b, cube_graph_alt.srctrg tw n b e
-              = cube_graph_alt.srctrg tw n b e') →
-        e = e'
+  lemma cube_graph_alt.edge_ext :
+          ∀ (tw : bool) (n : ℕ) (e e' : cube_graph_alt.edges n),
+            (∀ b, cube_graph_alt.srctrg tw n b e
+                = cube_graph_alt.srctrg tw n b e') →
+          e = e'
   | tw n      (sum.inl v)                (sum.inl v')                  p :=
       begin simp [cube_graph_alt.srctrg] at p, congr, assumption, end
   | tw (n +1) (sum.inl v)                (sum.inr (i',            v')) p :=
@@ -141,8 +141,8 @@ section
         rw [vector.insert_nth_succ, vector.insert_nth_zero] at p',
         simp [vector.insert_nth, list.insert_nth] at p',
         let p'' := (vector.cons_injection p').1,
-        simp [fin.zero, cube_graph_alt.num_zeros_is_odd,
-              fin.maybe_pred_rec] at p'', exact bnot_self p'',
+        simp [fin.zero, cube_graph_alt.num_zeros_is_odd] at p'',
+        exact bnot_self p'',
       end
   | tw (n +2) (sum.inr (⟨i +1, psi⟩, v)) (sum.inr (⟨0,     pz'⟩,  v')) p :=
       begin
@@ -151,8 +151,8 @@ section
         rw [vector.insert_nth_succ, vector.insert_nth_zero] at p',
         simp [vector.insert_nth, list.insert_nth] at p',
         let p'' := (vector.cons_injection p').1,
-        simp [fin.zero, cube_graph_alt.num_zeros_is_odd,
-              fin.maybe_pred_rec] at p'', exact bnot_self (eq.symm p''),
+        simp [fin.zero, cube_graph_alt.num_zeros_is_odd] at p'',
+        exact bnot_self (eq.symm p''),
       end
   | tw (n +2) (sum.inr (⟨i +1, psi⟩, v)) (sum.inr (⟨i' +1, psi'⟩, v')) p :=
       begin
@@ -194,7 +194,7 @@ section
           {rw this,},
         rw ←vector.cons_head_tail v,
         cases fin_i with i pi,
-        simp [fin.succ, cube_graph_alt.num_zeros_is_odd, fin.maybe_pred_rec],
+        simp [fin.succ, cube_graph_alt.num_zeros_is_odd],
         refl,
       end
 
@@ -205,9 +205,6 @@ section
     , edge_ext := cube_graph_alt.edge_ext tw n
     }
 end
-
-def standard_cube_graph_alt : ℕ → graph := cube_graph_alt ff
-def twisted_cube_graph_alt  : ℕ → graph := cube_graph_alt tt
 
 namespace cg_to_cg'
 section
@@ -231,9 +228,9 @@ section
       end
   | (n +1) (sum.inr v)      := sum.inr (fin.zero, nodes_map tw n v)
 
-  def srctrg_map (n : ℕ) (b : bool) (e : (cube_graph tw n).edges)
-        : nodes_map tw n ((cube_graph tw n).srctrg b e)
-        = (cube_graph_alt tw n).srctrg b (edges_map tw n e) :=
+  lemma srctrg_map (n : ℕ) (b : bool) (e : (cube_graph tw n).edges)
+          : nodes_map tw n ((cube_graph tw n).srctrg b e)
+          = (cube_graph_alt tw n).srctrg b (edges_map tw n e) :=
     begin
       revert b, induction n with n IH, { intro, refl,}, intro b,
       cases e with be v,
@@ -262,13 +259,13 @@ section
         swap, {refl,},
         simp [cube_graph_alt.srctrg], rw [vector.insert_nth_zero], congr,
         induction n with n IH, {simp [cube_graph_alt.num_zeros_is_odd],},
-        simp [fin.zero, cube_graph_alt.num_zeros_is_odd, fin.maybe_pred_rec],},
+        simp [fin.zero, cube_graph_alt.num_zeros_is_odd],},
     end
 end
 end cg_to_cg'
 
 def cg_to_cg' (tw : bool) (n : ℕ)
-      : graph.hom (cube_graph tw n) (cube_graph_alt tw n) :=
+      : graph_cat.hom (cube_graph tw n) (cube_graph_alt tw n) :=
   { nodes_map  := cg_to_cg'.nodes_map tw n
   , edges_map  := cg_to_cg'.edges_map tw n
   , srctrg_map := cg_to_cg'.srctrg_map tw n
@@ -293,9 +290,9 @@ section
                               | (_ +1), _,  v := v.head
                               end, edges_map n (sum.inr (i', v.tail)))) i
 
-  def srctrg_map : ∀ (n : ℕ) (b : bool) (e : (cube_graph_alt tw n).edges),
-          nodes_map tw n ((cube_graph_alt tw n).srctrg b e)
-        = (cube_graph tw n).srctrg b (edges_map tw n e)
+  lemma srctrg_map : ∀ (n : ℕ) (b : bool) (e : (cube_graph_alt tw n).edges),
+          nodes_map tw n ((cube_graph_alt tw n).srctrg b e) =
+          (cube_graph tw n).srctrg b (edges_map tw n e)
   | 0      b e                          := rfl
   | (n +1) b (sum.inl v)                :=
       begin
@@ -313,16 +310,15 @@ section
         dsimp [cube_graph_alt, cube_graph_alt.srctrg],
         rw [vector.eq_nil v, fin.to_zero, vector.insert_nth_zero],
         simp [nodes_map, fin.zero, cube_graph_alt.num_zeros_is_odd],
-        simp [edges_map, fin.zero, fin.maybe_pred_rec],
+        simp [edges_map, fin.zero],
         dsimp [cube_graph, prism_graph, prism_graph.srctrg, nodes_map], refl,
       end
   | (n +2) b (sum.inr (⟨0,    pz⟩,  v)) :=
       begin
         dsimp [cube_graph_alt, cube_graph_alt.srctrg],
-        rw [fin.to_zero, vector.insert_nth_zero], simp [nodes_map],
-        simp [fin.zero, cube_graph_alt.num_zeros_is_odd, fin.maybe_pred_rec],
-        unfold1 edges_map,
-        simp [fin.zero, fin.maybe_pred_rec, edges_map._match_1],
+        rw [fin.to_zero, vector.insert_nth_zero],
+        simp [nodes_map, fin.zero, cube_graph_alt.num_zeros_is_odd],
+        unfold1 edges_map, simp [fin.zero, edges_map._match_1],
         dsimp [cube_graph, prism_graph, prism_graph.srctrg, nodes_map], refl,
       end
   | (n +2) b (sum.inr (⟨i +1, psi⟩, v)) :=
@@ -330,8 +326,8 @@ section
         dsimp [cube_graph_alt, cube_graph_alt.srctrg],
         rw [fin.to_succ, vector.insert_nth_succ],
         unfold1 nodes_map, simp [vector.head, fin.succ],
-        simp [cube_graph_alt.num_zeros_is_odd, fin.maybe_pred_rec], symmetry,
-        unfold1 edges_map, simp [fin.maybe_pred_rec, edges_map._match_1],
+        simp [cube_graph_alt.num_zeros_is_odd], symmetry,
+        unfold1 edges_map, simp [edges_map._match_1],
         dsimp [cube_graph, prism_graph, prism_graph.srctrg], congr,
         transitivity (cube_graph tw (n +1)).srctrg (bxor (vector.head v && tw) b)
           (edges_map tw (n + 1) (sum.inr (⟨i, _⟩, vector.tail v))), refl,
@@ -343,7 +339,7 @@ end
 end cg'_to_cg
 
 def cg'_to_cg (tw : bool) (n : ℕ)
-      : graph.hom (cube_graph_alt tw n) (cube_graph tw n) :=
+      : graph_cat.hom (cube_graph_alt tw n) (cube_graph tw n) :=
   { nodes_map  := cg'_to_cg.nodes_map tw n
   , edges_map  := cg'_to_cg.edges_map tw n
   , srctrg_map := cg'_to_cg.srctrg_map tw n
@@ -352,27 +348,29 @@ def cg'_to_cg (tw : bool) (n : ℕ)
 section
   variable tw : bool
 
-  def cg'_cg_cg'_eq_id.nodes_map_eq : ∀ (n : ℕ) (v : (cube_graph tw n).nodes),
-        cg'_to_cg.nodes_map tw n (cg_to_cg'.nodes_map tw n v) = v
+  lemma cg_cg'_cg_eq_id.nodes_map_eq :
+          ∀ (n : ℕ) (v : (cube_graph tw n).nodes),
+            cg'_to_cg.nodes_map tw n (cg_to_cg'.nodes_map tw n v) = v
   | 0      v      := begin cases v, refl end
   | (n +1) (b, v) := begin simp [cg_to_cg'.nodes_map, cg'_to_cg.nodes_map],
-                           exact cg'_cg_cg'_eq_id.nodes_map_eq n v end
+                           exact cg_cg'_cg_eq_id.nodes_map_eq n v end
 
-  def cg_cg'_cg_eq_id.nodes_map_eq : ∀ (n : ℕ)(v : (cube_graph_alt tw n).nodes),
-        cg_to_cg'.nodes_map tw n (cg'_to_cg.nodes_map tw n v) = v
+  lemma cg'_cg_cg'_eq_id.nodes_map_eq :
+          ∀ (n : ℕ)(v : (cube_graph_alt tw n).nodes),
+            cg_to_cg'.nodes_map tw n (cg'_to_cg.nodes_map tw n v) = v
   | 0      v := begin change vector bool 0 at v, rw vector.eq_nil v,
                       simp [cg'_to_cg.nodes_map, cg_to_cg'.nodes_map], end
   | (n +1) v := begin simp [cg'_to_cg.nodes_map, cg_to_cg'.nodes_map],
-                      rw cg_cg'_cg_eq_id.nodes_map_eq, simp, end
+                      rw cg'_cg_cg'_eq_id.nodes_map_eq, simp, end
 
-  def cg'_cg_cg'_eq_id.edges_map_eq : ∀ (n : ℕ) (e : (cube_graph tw n).edges),
-        cg'_to_cg.edges_map tw n (cg_to_cg'.edges_map tw n e) = e
+  lemma cg_cg'_cg_eq_id.edges_map_eq : ∀ (n : ℕ) (e : (cube_graph tw n).edges),
+          cg'_to_cg.edges_map tw n (cg_to_cg'.edges_map tw n e) = e
   | 0      e                := begin cases e, refl end
   | (n +1) (sum.inl (b, e)) :=
        begin
          transitivity sum.inl (b, cg'_to_cg.edges_map tw n
                                     (cg_to_cg'.edges_map tw n e)), swap,
-         { congr, exact cg'_cg_cg'_eq_id.edges_map_eq n e,},
+         { congr, exact cg_cg'_cg_eq_id.edges_map_eq n e,},
          set e' := cg_to_cg'.edges_map tw n e with ←e'_prop,
          unfold cg_to_cg'.edges_map,
          rcases cg_to_cg'.edges_map tw n e with ⟨v⟩ | ⟨i, v⟩,
@@ -387,13 +385,12 @@ section
        end
   | (n +1) (sum.inr v)      :=
        begin
-         simp [cg_to_cg'.edges_map, cg'_to_cg.edges_map],
-         simp [fin.zero, fin.maybe_pred_rec],
-         exact cg'_cg_cg'_eq_id.nodes_map_eq tw n v,
+         simp [cg_to_cg'.edges_map, cg'_to_cg.edges_map, fin.zero],
+         exact cg_cg'_cg_eq_id.nodes_map_eq tw n v,
        end
 
-  def cg_cg'_cg_eq_id.edges_map_eq (n : ℕ) (e : (cube_graph_alt tw n).edges) :
-        cg_to_cg'.edges_map tw n (cg'_to_cg.edges_map tw n e) = e :=
+  lemma cg'_cg_cg'_eq_id.edges_map_eq (n : ℕ) (e : (cube_graph_alt tw n).edges) :
+          cg_to_cg'.edges_map tw n (cg'_to_cg.edges_map tw n e) = e :=
     begin
       induction n with n IH,
       { dsimp [cg'_to_cg.edges_map, cg_to_cg'.edges_map],
@@ -405,7 +402,7 @@ section
         rw IH, unfold cg_to_cg'.edges_map._match_1, refl,},
       cases i, rcases i_val with ⟨⟩ | ⟨i'_val⟩,
       { dsimp [cg'_to_cg.edges_map, fin.maybe_pred_rec, cg_to_cg'.edges_map],
-        congr, apply cg_cg'_cg_eq_id.nodes_map_eq,},
+        congr, apply cg'_cg_cg'_eq_id.nodes_map_eq,},
       cases n,
       { exfalso, exact nat.not_succ_le_zero i'_val (nat.le_of_lt_succ i_is_lt)},
       rcases v with ⟨bl, p⟩, rcases bl with ⟨⟩ | ⟨b, l⟩, {contradiction,},
@@ -416,13 +413,36 @@ section
       split, {refl,}, refl,
     end
 
-    def cg'_cg_cg'_eq_id (n : ℕ) :
-          graph.hom.comp (cg_to_cg' tw n) (cg'_to_cg tw n) = graph.hom.id :=
-      graph.hom.eq (funext (cg'_cg_cg'_eq_id.nodes_map_eq tw n))
-                   (funext (cg'_cg_cg'_eq_id.edges_map_eq tw n))
+  lemma cg_cg'_cg_eq_id (n : ℕ) :
+          graph_cat.comp (cg_to_cg' tw n) (cg'_to_cg tw n) =
+          graph_cat.id (cube_graph tw n) :=
+    graph_cat.hom.eq (funext (cg_cg'_cg_eq_id.nodes_map_eq tw n))
+                     (funext (cg_cg'_cg_eq_id.edges_map_eq tw n))
 
-    def cg_cg'_cg_eq_id (n : ℕ) :
-          graph.hom.comp (cg'_to_cg tw n) (cg_to_cg' tw n) = graph.hom.id :=
-      graph.hom.eq (funext (cg_cg'_cg_eq_id.nodes_map_eq tw n))
-                   (funext (cg_cg'_cg_eq_id.edges_map_eq tw n))
+  lemma cg'_cg_cg'_eq_id (n : ℕ) :
+          graph_cat.comp (cg'_to_cg tw n) (cg_to_cg' tw n) =
+          graph_cat.id (cube_graph_alt tw n) :=
+    graph_cat.hom.eq (funext (cg'_cg_cg'_eq_id.nodes_map_eq tw n))
+                     (funext (cg'_cg_cg'_eq_id.edges_map_eq tw n))
+
+  def cg_iso_cg' (n : ℕ) :
+        graph_cat.iso (cube_graph tw n) (cube_graph_alt tw n) :=
+    { f     := cg_to_cg' tw n
+    , g     := cg'_to_cg tw n
+    , fg_id := cg_cg'_cg_eq_id tw n
+    , gf_id := cg'_cg_cg'_eq_id tw n
+    }
+
+  def cube_graph_cat : category :=
+    { obj   := ℕ
+    , hom   := λ m n, graph_cat.hom (cube_graph tw m) (cube_graph tw n)
+    , id    := λ n, graph_cat.id (cube_graph tw n)
+    , comp  := λ {n n' n''}, @graph_cat.comp
+                   (cube_graph tw n) (cube_graph tw n') (cube_graph tw n'')
+    , id_l  := λ {m n}, @graph_cat.id_l (cube_graph tw m) (cube_graph tw n)
+    , id_r  := λ {m n}, @graph_cat.id_r (cube_graph tw m) (cube_graph tw n)
+    , assoc := λ {n n' n'' n'''}, @graph_cat.assoc (cube_graph tw n)
+                   (cube_graph tw n') (cube_graph tw n'') (cube_graph tw n''')
+}
+
 end

@@ -19,6 +19,7 @@ def to_zero {n : ℕ} {p : 0 < n +1} :
 def to_succ {n i : ℕ} {p : i +1 < n +1} :
       (⟨i +1, p⟩ : fin (n +1)) = fin.succ ⟨i, nat.pred_le_pred p⟩ := rfl
 
+@[simp]
 def maybe_pred_rec {n : ℕ} {α : Type*} (a : α) (f : fin n → α)
       : fin (n +1) → α
 | ⟨0,    _⟩                := a

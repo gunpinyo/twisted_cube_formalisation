@@ -1,4 +1,49 @@
+import category_theory.category
 import utils
+
+-- #check Σ obj : Type*, category obj
+
+def inhabited.set (α : Type*) : inhabited (set α) :=
+by unfold set; apply_instance
+
+#print inhabited.set
+  -- λ (α : Type u), eq.mpr _ (pi.inhabited α)
+#reduce inhabited.set ℕ
+  -- {default := λ (a : ℕ), true}
+
+
+#print add_comm_group
+#print classes
+#print instances inhabited
+#reduce (by apply_instance : inhabited ℕ)
+#print set
+namespace hidden
+-- BEGIN
+instance Prop_inhabited : inhabited Prop :=
+⟨true⟩
+-- inhabited.mk true
+
+instance : inhabited bool :=
+inhabited.mk ff
+
+instance bool_inhabited : inhabited bool :=
+inhabited.mk tt
+
+instance nat_inhabited : inhabited nat :=
+inhabited.mk 0
+
+instance unit_inhabited : inhabited unit :=
+inhabited.mk ()
+-- END
+
+def default (α : Type) [s : inhabited α] : α :=
+@inhabited.default α s
+
+#reduce default bool
+
+end hidden
+
+
 namespace foo
 def bxor_bxor_id (x y : bool) : bxor x (bxor x y) = y :=
   begin cases x, simp, simp, end
