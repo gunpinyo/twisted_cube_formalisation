@@ -45,10 +45,11 @@ section
     , srctrg   := prism_graph.srctrg tw G
     , edge_ext := prism_graph.edge_ext tw G
     }
+
 end
 
 def cube_graph (tw : bool) : ℕ → graph
-| 0      := singleton_reflexive_graph
+| 0      := graph.singleton_reflexive
 | (n +1) := prism_graph tw (cube_graph n)
 
 section
@@ -79,27 +80,26 @@ section
       (∀ b, v.insert_nth b i = v') → false
   | 0       i          v v' p :=
       begin
-        let p' := p (bnot v'.head),
+        replace p := p (bnot v'.head),
         cases i, cases i_val, swap,
-        {exact nat.not_succ_le_zero i_val (nat.le_of_lt_succ i_is_lt),},
-        rw [fin.to_zero, vector.insert_nth_zero] at p',
-        let p'' := (vector.cons_injection p').1, simp at p'',
-        exact bnot_self p'',
+        { exact nat.not_succ_le_zero i_val (nat.le_of_lt_succ i_is_lt),},
+        rw [fin.to_zero, vector.insert_nth_zero] at p,
+        replace p := (vector.cons_injection p).1, simp at p,
+        exact bnot_self p,
       end
   | (n +1) ⟨0,    pz⟩  v v' p :=
       begin
-        let p' := p (bnot v'.head),
-        simp [fin.to_zero, vector.insert_nth_zero] at p',
-        let p'' := (vector.cons_injection p').1, simp at p'',
-        exact bnot_self p'',
+        replace p := p (bnot v'.head),
+        simp [fin.to_zero, vector.insert_nth_zero] at p,
+        replace p := (vector.cons_injection p).1, simp at p,
+        exact bnot_self p,
       end
   | (n +1) ⟨i +1, psi⟩ v v' p :=
       begin
-        let fin_i : fin (n +1) := ⟨i, nat.pred_le_pred psi⟩,
-        have : ∀ b, vector.insert_nth b fin_i (vector.tail v) = vector.tail v',
-        { intro b, let p' := congr_arg vector.tail (p b),
-          rw [fin.to_succ, vector.insert_nth_succ] at p', assumption,},
-        exact cube_graph_alt.edge_ext_helper n fin_i v.tail v'.tail this,
+        let fin_i := fin.mk_from_succ i psi,
+        refine cube_graph_alt.edge_ext_helper n fin_i v.tail v'.tail _,
+        intro b, replace p := congr_arg vector.tail (p b),
+        rwa [fin.to_succ, vector.insert_nth_succ] at p,
       end
 
   lemma cube_graph_alt.edge_ext :
@@ -113,15 +113,15 @@ section
       begin
         exfalso, simp [cube_graph_alt.srctrg] at p,
         refine cube_graph_alt.edge_ext_helper n i' v' v _, intro b, symmetry,
-        let p' := p (bxor (band tw (cube_graph_alt.num_zeros_is_odd i' v')) b),
-        rwa [bxor_comm, bxor_bxor_id] at p',
+        replace p := p (bxor(band tw (cube_graph_alt.num_zeros_is_odd i' v'))b),
+        rwa [bxor_comm, bxor_bxor_id] at p,
       end
   | tw (n +1) (sum.inr (i,           v)) (sum.inl v')                  p :=
       begin
         exfalso, simp [cube_graph_alt.srctrg] at p,
         refine cube_graph_alt.edge_ext_helper n i v v' _, intro b,
-        let p' := p (bxor (band tw (cube_graph_alt.num_zeros_is_odd i v)) b),
-        rwa [bxor_comm, bxor_bxor_id] at p',
+        replace p := p (bxor (band tw (cube_graph_alt.num_zeros_is_odd i v)) b),
+        rwa [bxor_comm, bxor_bxor_id] at p,
       end
   | tw (n +1) (sum.inr (⟨0,    pi⟩,  v)) (sum.inr (⟨0,     pi'⟩,  v')) p :=
       begin
@@ -136,28 +136,28 @@ section
       begin exfalso, exact nat.not_lt_zero i  (nat.pred_le_pred psi)  end
   | tw (n +2) (sum.inr (⟨0,    pz⟩,  v)) (sum.inr (⟨i' +1, psi'⟩, v')) p :=
       begin
-        exfalso, let p' := p (bnot v'.head),
-        simp [cube_graph_alt.srctrg, fin.to_succ, fin.to_zero] at p',
-        rw [vector.insert_nth_succ, vector.insert_nth_zero] at p',
-        simp [vector.insert_nth, list.insert_nth] at p',
-        let p'' := (vector.cons_injection p').1,
-        simp [fin.zero, cube_graph_alt.num_zeros_is_odd] at p'',
-        exact bnot_self p'',
+        exfalso, replace p := p (bnot v'.head),
+        simp [cube_graph_alt.srctrg, fin.to_succ, fin.to_zero] at p,
+        rw [vector.insert_nth_succ, vector.insert_nth_zero] at p,
+        simp [vector.insert_nth, list.insert_nth] at p,
+        replace p := (vector.cons_injection p).1,
+        simp [fin.zero, cube_graph_alt.num_zeros_is_odd] at p,
+        exact bnot_self p,
       end
   | tw (n +2) (sum.inr (⟨i +1, psi⟩, v)) (sum.inr (⟨0,     pz'⟩,  v')) p :=
       begin
-        exfalso, let p' := p (bnot v.head),
-        simp [cube_graph_alt.srctrg, fin.to_succ, fin.to_zero] at p',
-        rw [vector.insert_nth_succ, vector.insert_nth_zero] at p',
-        simp [vector.insert_nth, list.insert_nth] at p',
-        let p'' := (vector.cons_injection p').1,
-        simp [fin.zero, cube_graph_alt.num_zeros_is_odd] at p'',
-        exact bnot_self (eq.symm p''),
+        exfalso, replace p := p (bnot v.head),
+        simp [cube_graph_alt.srctrg, fin.to_succ, fin.to_zero] at p,
+        rw [vector.insert_nth_succ, vector.insert_nth_zero] at p,
+        simp [vector.insert_nth, list.insert_nth] at p,
+        replace p := (vector.cons_injection p).1,
+        simp [fin.zero, cube_graph_alt.num_zeros_is_odd] at p,
+        exact bnot_self (eq.symm p),
       end
   | tw (n +2) (sum.inr (⟨i +1, psi⟩, v)) (sum.inr (⟨i' +1, psi'⟩, v')) p :=
       begin
-        let fin_i  : fin (n +1) := ⟨i, nat.pred_le_pred psi⟩,
-        let fin_i' : fin (n +1) := ⟨i', nat.pred_le_pred psi'⟩,
+        let fin_i  := fin.mk_from_succ i  psi,
+        let fin_i' := fin.mk_from_succ i' psi',
         simp [fin.to_succ] at p,
         suffices : ∀ b, v.head = v'.head ∧
             cube_graph_alt.srctrg tw (n + 1) b (sum.inr (fin_i,  v.tail)) =
@@ -172,23 +172,21 @@ section
           rw [(this tt).1, v_v'_tail_eq],},
         suffices : ∀ (fin_i : fin (n +1)) (v : bitvec (n +1)) (b : bool),
             cube_graph_alt.srctrg tw (n + 2) b
-              (sum.inr (fin.succ fin_i, v)) =
+              (sum.inr (fin_i.succ, v)) =
             v.head :: cube_graph_alt.srctrg tw (n + 1) (bxor (band tw v.head) b)
               (sum.inr (fin_i, v.tail)),
         { intro b,
-          let p' := p (bxor (band tw v.head) b),
-          rw [this, this] at p',
-          let p'' := vector.cons_injection p',
-          simp at p'',
-          rw [←p''.1, bxor_bxor_id] at p',
-          rw [←p''.1] at |-,
-          exact vector.cons_injection p',},
+          replace p := p (bxor (band tw v.head) b),
+          rw [this, this] at p,
+          let p' := vector.cons_injection p, simp at p',
+          rw [←p'.1, bxor_bxor_id] at p, rw [←p'.1] at |-,
+          exact vector.cons_injection p,},
         clear p fin_i fin_i' psi psi' i i' v v',
         intros fin_i v b,
         simp [cube_graph_alt.srctrg],
         rw ←vector.insert_nth_succ,
         cases tw, {simp,}, simp,
-        suffices : cube_graph_alt.num_zeros_is_odd (fin.succ fin_i) v
+        suffices : cube_graph_alt.num_zeros_is_odd fin_i.succ v
                  = bxor (vector.head v)
                      (cube_graph_alt.num_zeros_is_odd fin_i (vector.tail v)),
           {rw this,},
@@ -223,7 +221,7 @@ section
       | sum.inl v      := sum.inl (b :: v)
       | sum.inr (i, v) := match n, i, v with
                           | 0,      i, v := i.elim0
-                          | (_ +1), i, v := sum.inr (fin.succ i, b :: v)
+                          | (_ +1), i, v := sum.inr (i.succ, b :: v)
                           end
       end
   | (n +1) (sum.inr v)      := sum.inr (fin.zero, nodes_map tw n v)
@@ -245,7 +243,7 @@ section
           dsimp [edges_map._match_1, edges_map._match_2, cube_graph_alt.srctrg],
           rw vector.insert_nth_succ,
           cases tw, {simp,}, simp,
-          suffices : cube_graph_alt.num_zeros_is_odd (fin.succ i) (b' :: v)
+          suffices : cube_graph_alt.num_zeros_is_odd i.succ (b' :: v)
                    = bxor b' (cube_graph_alt.num_zeros_is_odd i v), rw this,
           cases i with i_val i_p, cases v with v_l v_p,
           simp [fin.succ, vector.cons, cube_graph_alt.num_zeros_is_odd],
@@ -381,7 +379,7 @@ section
          cases n with n, {exact i.elim0,}, unfold cg_to_cg'.edges_map._match_2,
          cases i, unfold fin.succ, unfold1 cg'_to_cg.edges_map,
          unfold fin.maybe_pred_rec,
-         congr, { unfold cg'_to_cg.edges_map._match_1, simp,}, simp, assumption,
+         congr, { unfold cg'_to_cg.edges_map._match_1, simp,}, simpa,
        end
   | (n +1) (sum.inr v)      :=
        begin
@@ -427,10 +425,10 @@ section
 
   def cg_iso_cg' (n : ℕ) :
         graph_cat.iso (cube_graph tw n) (cube_graph_alt tw n) :=
-    { f     := cg_to_cg' tw n
-    , g     := cg'_to_cg tw n
-    , fg_id := cg_cg'_cg_eq_id tw n
-    , gf_id := cg'_cg_cg'_eq_id tw n
+    { dir     := cg_to_cg' tw n
+    , inv     := cg'_to_cg tw n
+    , dir_inv := cg_cg'_cg_eq_id tw n
+    , inv_dir := cg'_cg_cg'_eq_id tw n
     }
 
   def cube_graph_cat : category :=

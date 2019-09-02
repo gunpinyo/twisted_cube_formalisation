@@ -12,8 +12,8 @@ structure category :=
 
 namespace category
   structure iso (C : category) (X Y : C.obj) :=
-    (f     : C.hom X Y)
-    (g     : C.hom Y X)
-    (fg_id : C.comp f g = C.id X)
-    (gf_id : C.comp g f = C.id Y)
+    (dir     : C.hom X Y)
+    (inv     : C.hom Y X)
+    (dir_inv : C.comp dir inv = C.id X)
+    (inv_dir : C.comp inv dir = C.id Y)
 end category

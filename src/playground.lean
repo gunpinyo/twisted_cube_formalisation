@@ -1,191 +1,74 @@
-import category_theory.category
-import utils
+-- import utils
+variable b : bool
+#check b.rec_on
+#check nat.add
+inductive fin' : ℕ → Type
+| zero : fin' 0
+| succ : Π {n : ℕ}, fin' n → fin' (n +1)
 
--- #check Σ obj : Type*, category obj
+-- example : ∀ (n : ℕ) (i : fin n), i.cast_succ = (↑i : fin (n +1)) :=
 
-def inhabited.set (α : Type*) : inhabited (set α) :=
-by unfold set; apply_instance
+-- def foo (n : ℕ) : fin n → bool
+-- | 0      := false
+-- | (i +1) := true
 
-#print inhabited.set
-  -- λ (α : Type u), eq.mpr _ (pi.inhabited α)
-#reduce inhabited.set ℕ
-  -- {default := λ (a : ℕ), true}
+-- def fin_cycle : Π n : ℕ, fin n → fin n
+-- | (n +1) ⟨0,    _⟩ := fin.last n
+-- | (n +1) ⟨i +1, p⟩ := let fin_i : fin n := ⟨i, nat.pred_le_pred p⟩
+--                        in {! !} --fin.succ (fin.succ (fin_double n fin_i))
 
+def fin_is_even : Π n : ℕ, fin n → bool
+| 0      i                        := i.elim0
+| (n +1) ⟨0,    _⟩                := true
+| (n +1) ⟨i_val +1, succ_i_is_lt⟩ :=
+     let i : fin n := ⟨i_val, nat.pred_le_pred succ_i_is_lt⟩
+      in bnot (fin_is_even n i)
 
-#print add_comm_group
-#print classes
-#print instances inhabited
-#reduce (by apply_instance : inhabited ℕ)
-#print set
-namespace hidden
--- BEGIN
-instance Prop_inhabited : inhabited Prop :=
-⟨true⟩
--- inhabited.mk true
+@[pattern]
+def fin.zero {n : ℕ} : fin (n +1) := ⟨0, nat.zero_lt_succ n⟩
 
-instance : inhabited bool :=
-inhabited.mk ff
+attribute [pattern] fin.succ
 
-instance bool_inhabited : inhabited bool :=
-inhabited.mk tt
+def fin_is_even' : Π n : ℕ, fin n → bool
+| 0      i            := i.elim0
+| (n +1) fin.zero     := true
+| (n +1) (fin.succ i) := bnot (fin_is_even' n i)
 
-instance nat_inhabited : inhabited nat :=
-inhabited.mk 0
+I still have another question regarding `fin`.  Sometimes, I want to use pattern matching on `i : fin n` in the same way as one will do in `ℕ` but since the inductive part is in `i.val` so I need to do as follows:
 
-instance unit_inhabited : inhabited unit :=
-inhabited.mk ()
--- END
+```lean
+def fin_is_even : Π n : ℕ, fin n → bool
+| 0      i                        := i.elim0
+| (n +1) ⟨0,    _⟩                := true
+| (n +1) ⟨i_val +1, succ_i_is_lt⟩ :=hwere
+      in bnot (fin_is_even n i)
+```
 
-def default (α : Type) [s : inhabited α] : α :=
-@inhabited.default α s
+Ok, it works but in practice, I find it quite annoying to write `let i : fin n := ⟨i_val, nat.pred_le_pred succ_i_is_lt⟩` every time whereas `i` should be obtained directly from something like `fin.succ i`. Therefore, I try to use `@[pattern]` to help me with this as follows:
 
-#reduce default bool
+```lean
+@[pattern]
+def fin.zero {n : ℕ} : fin (n +1) := ⟨0, nat.zero_lt_succ n⟩
 
-end hidden
+attribute [pattern] fin.succ
 
+def fin_is_even' : Π n : ℕ, fin n → bool
+| 0      i            := i.elim0
+| (n +1) fin.zero     := true
+| (n +1) (fin.succ i) := bnot (fin_is_even n i)
+```
 
-namespace foo
-def bxor_bxor_id (x y : bool) : bxor x (bxor x y) = y :=
-  begin cases x, simp, simp, end
-
-example (f : ℕ → ℕ) (y : ℕ) (P : ℕ → Type) : ((λ x : ℕ, f x) y) = ((λ x : ℕ, f x) y) :=
-  begin dsimp, end
-
-example (P : bool → Type) (a : bool) :
-    (Π b, P (bxor b (bxor b a))) → P a  :=
-  begin
-    intro h,
-    rw bxor_bxor_id at h,
-    -- intro x,
-    -- rw nat.add_comm, exact h x,
-  end
-end
-
-example (x : ℕ) (h : x = 3)  : x + x + x = 9 :=
-begin
-  set y := x with ←h_xy,
-/-
-x : ℕ,
-y : ℕ := x,
-h_xy : x = y,
-h : y = 3
-⊢ y + y + y = 9
--/
-end
-
-def foo (n : ℕ) (i : fin n) (v : bitvec n) : bool × fin n :=
-  ((match n, i, v with
-   | 0,      i, _ := _
-   | (_ +1), i, v := v.head end), _)
-
-
-def product_of_units : ℕ → Type
-| 0      := empty
-| (n +1) := unit ⊕ (product_of_units n)
-
-example (n : ℕ) : product_of_units (n +1) :=
-  begin
-    unfold product_of_units,
-    left, exact ()
-  end
-
-
-structure graph :=
-  (nodes  : Type)
-  (edges  : Type)
-  (srctrg : bool → edges → nodes)
-
-def prism_graph (G : graph) : graph :=
-  { nodes  := bool × G.nodes
-  , edges  := (bool × G.edges) ⊕ G.nodes
-  , srctrg := λ b e, match e with
-                     | (sum.inl (b', e)) := (b, G.srctrg b' e)
-                     | (sum.inr v)       := (b, v)
-                     end
-  }
-
-def cube_graph : ℕ → graph
-| 0      := ⟨unit, unit, (λ _ _, ())⟩
-| (n +1) := prism_graph (cube_graph n)
-
-example : nat.zero = nat.zero := by simp
-#check fin.elim0
-example (n : ℕ) (b : bool) (v : (cube_graph n).nodes) :
-      (graph.srctrg (cube_graph (n +1)) b (sum.inr v)) = (b, v) :=
-  begin conv begin
-    whnf,
-
-
-  end end
-
-
-#print foo
-def prism_graph.srctrg (b : bool) : prism_graph.edges G → prism_graph.nodes G
-| (sum.inl (ff, e)) := (ff, G.srctrg (bxor tw b) e)
-| (sum.inl (tt, e)) := (tt, G.srctrg b e)
-| (sum.inr v)       := (b, v)
-
-
-def foo : bool → Type := λ _, unit
-namespace bar
-section
-  parameter b : bool
-  include b
-  def foo' := foo b
-  #check foo' -- Type
-  example : Type := by exact foo'
-end
+However I get an error, what is wrong with my code?  Did I misunderstand anything about `@[pattern]`?
 
 section
-  parameter twisted : bool
-  include twisted
+@[pattern]
+def fin_zero {n : ℕ} : fin (n +1) := ⟨0, nat.zero_lt_succ n⟩
 
-  def cg  := cube_graph twisted
-  def cg' := cube_graph_alt twisted
+@[pattern]
+def fin_succ {n : ℕ} : fin n → fin n.succ
+| ⟨a, h⟩ := ⟨a.succ, nat.succ_lt_succ h⟩
 
-  def foo : unit :=
-    begin
-      have : (cg 0).nodes,
-        exact (),
-      exact (),
-    end
+def fin_is_zero (n : ℕ) : fin n → bool
+| fin_zero     := false
+| (fin_succ i) := true
 end
-end bar
-
-example (α β : Type) (p : α = β) : (unit → α) = (unit → β) :=
-  begin rw p end
-
-example (α : Type) : Π (x y : α), x == y → x == y
-| a .(a) rfl = r
-
-def foo1 (α : unit → Type*) (x : unit) (y : α x) : y = y :=
-  match x with
-  | unit.star := rfl
-  end
-def foo3 (α : unit → Type*) (x : unit) (y : α x) : y = y :=
-begin
-  revert x,
-  refine punit.rec _,
-  -- refl will not work here
-  intros, refl
-end
-
-section
-  parameters (α : Type) (x y : α)
-  #check x = y
-end
-
-def uip (α : Type) (x y : α) (p q : x = y) : Π b : bool, p = q := λ _, rfl
-
-def foo2 (α : unit → Type*) (x : unit) (y : α x) : y = y :=
-  match x, y with
-  | unit.star, _ := rfl
-  end
-
-section
-  parameter x : ℕ
-  include x
-  def foo := nat.zero
-end
-
-#check foo
