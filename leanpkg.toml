@@ -1,8 +1,8 @@
 [package]
 name = "twisted_cube_formalisation"
 version = "0.1"
-lean_version = "nightly-2018-11-13"
+lean_version = "leanprover-community/lean:3.17.1"
 path = "src"
 
 [dependencies]
-mathlib = {git = "https://github.com/leanprover/mathlib", rev = "a79794ab98097754da437c75cd33a2f9b5836eff"}
+mathlib = {git = "https://github.com/leanprover-community/mathlib", rev = "1bb3d198adb92b0fe00b922a357cc29f54c35e70"}
